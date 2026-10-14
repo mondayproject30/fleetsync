@@ -73,75 +73,129 @@ export function WarehouseMap({ state, onShelfClick, onAddObstacleAt }) {
         <rect width={WAREHOUSE_CONFIG.width} height={WAREHOUSE_CONFIG.height} fill="#050811" />
         <rect width={WAREHOUSE_CONFIG.width} height={WAREHOUSE_CONFIG.height} fill="url(#gridPattern)" />
 
-        {/* 2. Three-Lane Aisles Overlay */}
-        {show3LaneOverlay && (
-          <g className="three-lane-roadways" opacity="0.85">
-            {/* Mid Horizontal Corridor Roadbed */}
-            <rect
-              x={THREE_LANE_CORRIDORS.horizontalMid.xStart}
-              y={THREE_LANE_CORRIDORS.horizontalMid.yTop}
-              width={THREE_LANE_CORRIDORS.horizontalMid.xEnd - THREE_LANE_CORRIDORS.horizontalMid.xStart}
-              height={THREE_LANE_CORRIDORS.horizontalMid.height}
-              fill="#080e1c"
-              stroke="rgba(255, 255, 255, 0.12)"
-              strokeWidth="1.2"
-            />
-            {/* Mid Corridor Lane Dividers (Dashed White Lines) */}
-            <line
-              x1={THREE_LANE_CORRIDORS.horizontalMid.xStart}
-              y1="365"
-              x2={THREE_LANE_CORRIDORS.horizontalMid.xEnd}
-              y2="365"
-              stroke="rgba(255, 255, 255, 0.22)"
-              strokeDasharray="6 6"
-              strokeWidth="1.2"
-            />
-            <line
-              x1={THREE_LANE_CORRIDORS.horizontalMid.xStart}
-              y1="415"
-              x2={THREE_LANE_CORRIDORS.horizontalMid.xEnd}
-              y2="415"
-              stroke="rgba(255, 255, 255, 0.22)"
-              strokeDasharray="6 6"
-              strokeWidth="1.2"
-            />
+        {/* 2. Three-Lane Aisles Overlay & Clearly Visible Left/Right Lane Lines */}
+        <g className="three-lane-roadways" opacity="0.95">
+          {/* Mid Horizontal Corridor Roadbed */}
+          <rect
+            x={THREE_LANE_CORRIDORS.horizontalMid.xStart}
+            y={THREE_LANE_CORRIDORS.horizontalMid.yTop}
+            width={THREE_LANE_CORRIDORS.horizontalMid.xEnd - THREE_LANE_CORRIDORS.horizontalMid.xStart}
+            height={THREE_LANE_CORRIDORS.horizontalMid.height}
+            fill="#080e1c"
+            stroke="rgba(0, 210, 255, 0.25)"
+            strokeWidth="1.5"
+          />
 
-            {/* Vertical Center Corridor Roadbed */}
-            <rect
-              x={THREE_LANE_CORRIDORS.verticalCenter.xLeft}
-              y={THREE_LANE_CORRIDORS.verticalCenter.yStart}
-              width={THREE_LANE_CORRIDORS.verticalCenter.width}
-              height={THREE_LANE_CORRIDORS.verticalCenter.yEnd - THREE_LANE_CORRIDORS.verticalCenter.yStart}
-              fill="#080e1c"
-              stroke="rgba(255, 255, 255, 0.12)"
-              strokeWidth="1.2"
-            />
-            {/* Vertical Center Lane Dividers */}
-            <line
-              x1="535"
-              y1={THREE_LANE_CORRIDORS.verticalCenter.yStart}
-              x2="535"
-              y2={THREE_LANE_CORRIDORS.verticalCenter.yEnd}
-              stroke="rgba(255, 255, 255, 0.22)"
-              strokeDasharray="6 6"
-              strokeWidth="1.2"
-            />
-            <line
-              x1="575"
-              y1={THREE_LANE_CORRIDORS.verticalCenter.yStart}
-              x2="575"
-              y2={THREE_LANE_CORRIDORS.verticalCenter.yEnd}
-              stroke="rgba(255, 255, 255, 0.22)"
-              strokeDasharray="6 6"
-              strokeWidth="1.2"
-            />
+          {/* Lane 1: Left / Top Lane Line (y = 340) - Clearly Visible Cyan */}
+          <line
+            x1={THREE_LANE_CORRIDORS.horizontalMid.xStart}
+            y1={THREE_LANE_CORRIDORS.horizontalMid.lane1Y}
+            x2={THREE_LANE_CORRIDORS.horizontalMid.xEnd}
+            y2={THREE_LANE_CORRIDORS.horizontalMid.lane1Y}
+            stroke="#00d2ff"
+            strokeWidth="2.2"
+            strokeDasharray="9 5"
+            markerEnd="url(#cyanArrow)"
+          />
 
-            {/* Lane Labels */}
-            <text x="245" y="335" fill="rgba(255, 255, 255, 0.35)" fontSize="9" fontFamily="monospace">L1: S1/S2 ACCESS</text>
-            <text x="245" y="385" fill="#ffdd33" fontSize="10" fontWeight="bold" fontFamily="monospace">L2: CENTER TRANSIT</text>
-            <text x="245" y="435" fill="rgba(255, 255, 255, 0.35)" fontSize="9" fontFamily="monospace">L3: S3/S4 ACCESS</text>
-          </g>
-        )}
+          {/* Mid Corridor Lane Dividers (Crisp Dashed White/Ice Lines) */}
+          <line
+            x1={THREE_LANE_CORRIDORS.horizontalMid.xStart}
+            y1="365"
+            x2={THREE_LANE_CORRIDORS.horizontalMid.xEnd}
+            y2="365"
+            stroke="rgba(255, 255, 255, 0.45)"
+            strokeDasharray="8 6"
+            strokeWidth="1.6"
+          />
+
+          {/* Lane 3: Right / Bottom Lane Line (y = 440) - Clearly Visible Cyan */}
+          <line
+            x1={THREE_LANE_CORRIDORS.horizontalMid.xStart}
+            y1={THREE_LANE_CORRIDORS.horizontalMid.lane3Y}
+            x2={THREE_LANE_CORRIDORS.horizontalMid.xEnd}
+            y2={THREE_LANE_CORRIDORS.horizontalMid.lane3Y}
+            stroke="#00d2ff"
+            strokeWidth="2.2"
+            strokeDasharray="9 5"
+            markerEnd="url(#cyanArrow)"
+          />
+
+          <line
+            x1={THREE_LANE_CORRIDORS.horizontalMid.xStart}
+            y1="415"
+            x2={THREE_LANE_CORRIDORS.horizontalMid.xEnd}
+            y2="415"
+            stroke="rgba(255, 255, 255, 0.45)"
+            strokeDasharray="8 6"
+            strokeWidth="1.6"
+          />
+
+          {/* Vertical Center Corridor Roadbed */}
+          <rect
+            x={THREE_LANE_CORRIDORS.verticalCenter.xLeft}
+            y={THREE_LANE_CORRIDORS.verticalCenter.yStart}
+            width={THREE_LANE_CORRIDORS.verticalCenter.width}
+            height={THREE_LANE_CORRIDORS.verticalCenter.yEnd - THREE_LANE_CORRIDORS.verticalCenter.yStart}
+            fill="#080e1c"
+            stroke="rgba(0, 210, 255, 0.25)"
+            strokeWidth="1.5"
+          />
+
+          {/* Vertical Lane 1: Left Lane Line (x = 515) - Clearly Visible Cyan */}
+          <line
+            x1={THREE_LANE_CORRIDORS.verticalCenter.lane1X}
+            y1={THREE_LANE_CORRIDORS.verticalCenter.yStart}
+            x2={THREE_LANE_CORRIDORS.verticalCenter.lane1X}
+            y2={THREE_LANE_CORRIDORS.verticalCenter.yEnd}
+            stroke="#00d2ff"
+            strokeWidth="2.2"
+            strokeDasharray="9 5"
+            markerEnd="url(#cyanArrow)"
+          />
+
+          {/* Vertical Center Lane Dividers */}
+          <line
+            x1="535"
+            y1={THREE_LANE_CORRIDORS.verticalCenter.yStart}
+            x2="535"
+            y2={THREE_LANE_CORRIDORS.verticalCenter.yEnd}
+            stroke="rgba(255, 255, 255, 0.45)"
+            strokeDasharray="8 6"
+            strokeWidth="1.6"
+          />
+
+          {/* Vertical Lane 3: Right Lane Line (x = 595) - Clearly Visible Cyan */}
+          <line
+            x1={THREE_LANE_CORRIDORS.verticalCenter.lane3X}
+            y1={THREE_LANE_CORRIDORS.verticalCenter.yStart}
+            x2={THREE_LANE_CORRIDORS.verticalCenter.lane3X}
+            y2={THREE_LANE_CORRIDORS.verticalCenter.yEnd}
+            stroke="#00d2ff"
+            strokeWidth="2.2"
+            strokeDasharray="9 5"
+            markerEnd="url(#cyanArrow)"
+          />
+
+          <line
+            x1="575"
+            y1={THREE_LANE_CORRIDORS.verticalCenter.yStart}
+            x2="575"
+            y2={THREE_LANE_CORRIDORS.verticalCenter.yEnd}
+            stroke="rgba(255, 255, 255, 0.45)"
+            strokeDasharray="8 6"
+            strokeWidth="1.6"
+          />
+
+          {/* Clearly Styled Lane Badges & Labels */}
+          <text x="240" y="333" fill="#00d2ff" fontSize="10" fontWeight="bold" fontFamily="monospace">L1: LEFT LANE (OVERTAKE / DOCK)</text>
+          <text x="240" y="383" fill="#ffdd33" fontSize="10" fontWeight="bold" fontFamily="monospace">L2: CENTER TRANSIT</text>
+          <text x="240" y="433" fill="#00d2ff" fontSize="10" fontWeight="bold" fontFamily="monospace">L3: RIGHT LANE (OVERTAKE / DOCK)</text>
+
+          <text x="515" y="105" fill="#00d2ff" fontSize="9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">L1</text>
+          <text x="555" y="105" fill="#ffdd33" fontSize="9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">L2</text>
+          <text x="595" y="105" fill="#00d2ff" fontSize="9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">L3</text>
+        </g>
 
         {/* 3. Primary Yellow Movement Network & Circulation Loops (Inspired by Diagram) */}
         <g className="designated-yellow-routes">
@@ -548,10 +602,10 @@ export function WarehouseMap({ state, onShelfClick, onAddObstacleAt }) {
         {/* 14. Conflict Resolution Markers */}
         {conflictZones.map(conf => (
           <g key={conf.id} transform={`translate(${conf.x}, ${conf.y})`}>
-            <circle r="24" fill="none" stroke={conf.type === 'RIGHT_EVASION' ? '#00d2ff' : '#ff4757'} strokeWidth="2" strokeDasharray="4 4" />
-            <circle r="6" fill={conf.type === 'RIGHT_EVASION' ? '#00d2ff' : '#ff4757'} filter={conf.type === 'RIGHT_EVASION' ? 'url(#glowCyan)' : 'url(#glowRed)'} />
-            <text x="0" y="-28" fill={conf.type === 'RIGHT_EVASION' ? '#00d2ff' : '#ff4757'} fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-              {conf.type === 'RIGHT_EVASION' ? '⇄ PASS RIGHT (BOTH)' : `⚡ PRIORITY: ${conf.winnerId}`}
+            <circle r="26" fill="none" stroke={conf.type === 'OVERTAKE' || conf.type === 'RIGHT_EVASION' ? '#00d2ff' : '#ff4757'} strokeWidth="2.2" strokeDasharray="4 4" />
+            <circle r="6" fill={conf.type === 'OVERTAKE' || conf.type === 'RIGHT_EVASION' ? '#00d2ff' : '#ff4757'} filter={conf.type === 'OVERTAKE' || conf.type === 'RIGHT_EVASION' ? 'url(#glowCyan)' : 'url(#glowRed)'} />
+            <text x="0" y="-30" fill={conf.type === 'OVERTAKE' || conf.type === 'RIGHT_EVASION' ? '#00d2ff' : '#ff4757'} fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+              {conf.type === 'OVERTAKE' ? `⚡ OVERTAKE: ${conf.winnerId} ➔ ${conf.yielderId}` : conf.type === 'RIGHT_EVASION' ? '⇄ PASS RIGHT' : `⚡ PRIORITY: ${conf.winnerId}`}
             </text>
           </g>
         ))}
@@ -640,8 +694,15 @@ export function WarehouseMap({ state, onShelfClick, onAddObstacleAt }) {
                 />
               </g>
 
-              {/* State / Yield / Evade Indicator */}
-              {isEvadingRight ? (
+              {/* State / Yield / Evade / Overtake Indicator */}
+              {robot.state === 'OVERTAKING' ? (
+                <g transform="translate(18, -14)">
+                  <circle r="10" fill="#00d2ff" filter="url(#glowCyan)" />
+                  <text x="0" y="3" fill="#000" fontSize="9" fontWeight="bold" textAnchor="middle">
+                    ↷
+                  </text>
+                </g>
+              ) : isEvadingRight ? (
                 <g transform="translate(18, -14)">
                   <circle r="9" fill="#00d2ff" />
                   <text x="0" y="3" fill="#000" fontSize="9" fontWeight="bold" textAnchor="middle">

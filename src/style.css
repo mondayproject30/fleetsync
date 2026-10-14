@@ -410,8 +410,8 @@ body {
 .state-charging { background: rgba(46, 213, 115, 0.2); color: var(--color-green); }
 .state-yielding { background: rgba(255, 71, 87, 0.2); color: var(--color-red); }
 .state-waiting_yield { background: rgba(255, 71, 87, 0.2); color: var(--color-red); }
-.state-blocked { background: rgba(255, 71, 87, 0.3); color: var(--color-red); }
 .state-evading_right { background: rgba(0, 210, 255, 0.2); color: var(--color-cyan); border: 1px solid rgba(0, 210, 255, 0.4); }
+.state-overtaking { background: rgba(0, 210, 255, 0.25); color: #00d2ff; border: 1px solid #00d2ff; font-weight: bold; }
 
 /* Battery Row */
 .robot-battery-row {

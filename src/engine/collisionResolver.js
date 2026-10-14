@@ -109,34 +109,33 @@ export class CollisionResolver {
         const conflictDistanceThreshold = 65; // pixels (approaching collision zone)
 
         if (dist < conflictDistanceThreshold || nextOverlap) {
-          // Check if robots are approaching each other on collision course
-          const dx = r2.x - r1.x;
-          const dy = r2.y - r1.y;
-          const r1MovingTowardsR2 = (dx * Math.cos(r1.heading) + dy * Math.sin(r1.heading)) > 0;
-          const r2MovingTowardsR1 = (-dx * Math.cos(r2.heading) - dy * Math.sin(r2.heading)) > 0;
-          const isApproaching = (r1MovingTowardsR2 || r2MovingTowardsR1) && (r1.x > 125 && r2.x > 125);
+          // Identify lower-number and higher-number robots
+          const getBotNum = (r) => parseInt(r.id.replace(/\D/g, ''), 10) || 0;
+          const num1 = getBotNum(r1);
+          const num2 = getBotNum(r2);
+          const lowerBot = num1 < num2 ? r1 : r2;
+          const higherBot = num1 < num2 ? r2 : r1;
 
-          // Bilateral Right-Side Evasion (reverse route & move right for both AMRs)
-          if (isApproaching) {
-            r1.evadeToRight(r2);
-            r2.evadeToRight(r1);
+          // Rule: If robots collide, lower number robot takes another lane (left or right) and overtakes higher robot from center
+          if (lowerBot.x > 125 && higherBot.x > 125) {
+            higherBot.holdCenterLane(lowerBot.id);
+            const chosenLane = lowerBot.initiateOvertake(higherBot, robots);
 
             activeConflicts.push({
-              id: `CONF-${r1.id}-${r2.id}`,
-              x: (r1.x + r2.x) / 2,
-              y: (r1.y + r2.y) / 2,
-              r1: r1.id,
-              r2: r2.id,
-              winnerId: `${r1.id} & ${r2.id}`,
-              yielderId: 'Both Evading',
-              type: 'RIGHT_EVASION',
-              reason: 'Bilateral Right Evasion'
+              id: `CONF-${lowerBot.id}-${higherBot.id}`,
+              x: (lowerBot.x + higherBot.x) / 2,
+              y: (lowerBot.y + higherBot.y) / 2,
+              r1: lowerBot.id,
+              r2: higherBot.id,
+              winnerId: lowerBot.id,
+              yielderId: higherBot.id,
+              type: 'OVERTAKE',
+              reason: `${lowerBot.id} (Lower #) overtaking ${higherBot.id} via ${chosenLane || 'Side Lane'}`
             });
 
-            if (!r1.hasLoggedEvasion && !r2.hasLoggedEvasion) {
-              r1.hasLoggedEvasion = true;
-              r2.hasLoggedEvasion = true;
-              this.log(`[COLLISION EVASION] Potential collision between ${r1.id} & ${r2.id}! Reversing route and evading to the right side for both AMRs.`, 'warning');
+            if (!lowerBot.hasLoggedOvertake) {
+              lowerBot.hasLoggedOvertake = true;
+              this.log(`[OVERTAKE INITIATED] Potential collision! Lower number Robot ${lowerBot.id} taking ${chosenLane} to overtake Robot ${higherBot.id} from center.`, 'warning');
             }
             continue;
           }

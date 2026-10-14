@@ -106,9 +106,10 @@ export class SensorSimulator {
       if ((other.state === 'IDLE' || other.state === 'CHARGING') && other.x <= 120) continue;
       if ((robot.state === 'IDLE' || robot.state === 'CHARGING') && robot.x <= 120) continue;
 
-      // If the other robot is actively yielding FOR this robot or evading together, do not halt this robot
+      // If the other robot is actively yielding FOR this robot or evading/overtaking together, do not halt this robot
       if (other.yieldingFor === robot.id) continue;
       if (other.evasionPartnerId === robot.id || robot.evasionPartnerId === other.id) continue;
+      if (other.overtakingTargetId === robot.id || robot.overtakingTargetId === other.id) continue;
 
       const dist = Math.hypot(other.x - robot.x, other.y - robot.y);
       if (dist <= lidarRange + WAREHOUSE_CONFIG.robotRadius) {

@@ -189,35 +189,41 @@ runTest('Deadlock Detection: Stalled Robot Detection & Recovery Recovery', () =>
 });
 
 // -----------------------------------------------------------------
-// TEST 6: Bilateral Collision Evasion: Reverse & Move Right (Both AMRs)
+// TEST 6: Lower Number Robot Takes Alternate Lane to Overtake Higher Robot From Center
 // -----------------------------------------------------------------
-runTest('Bilateral Collision Evasion: Impending Collisions Trigger Reversal & Right-Side Shift for Both AMRs', () => {
+runTest('Overtake Protocol: Lower Number AMR Takes Left/Right Lane to Overtake Higher AMR from Center', () => {
   const res = new ReservationManager();
   const resolver = new CollisionResolver(res);
 
-  // Robot 1 moving East at y = 390
+  // Robot 1 (lower number: 1) moving East at center transit (y = 390)
   const r1 = new Robot('R1', 'AMR-01', 300, 390, '#00d2ff');
   r1.heading = 0; // East
-  r1.targetPoint = { x: 450, y: 390 };
+  r1.targetPoint = { x: 500, y: 390 };
   r1.state = 'EN_ROUTE_SHELF';
 
-  // Robot 2 moving West at y = 390 (direct head-on collision course)
-  const r2 = new Robot('R2', 'AMR-02', 350, 390, '#ff9f43');
-  r2.heading = Math.PI; // West
-  r2.targetPoint = { x: 200, y: 390 };
-  r2.state = 'EN_ROUTE_CONVEYOR';
+  // Robot 4 (higher number: 4) moving West at center transit (y = 390)
+  const r4 = new Robot('R4', 'AMR-04', 350, 390, '#2ed573');
+  r4.heading = Math.PI; // West
+  r4.targetPoint = { x: 200, y: 390 };
+  r4.state = 'EN_ROUTE_CONVEYOR';
 
-  resolver.resolveFleetConflicts([r1, r2]);
+  resolver.resolveFleetConflicts([r1, r4]);
 
-  assert.strictEqual(r1.state, 'EVADING_RIGHT', 'Robot 1 must enter EVADING_RIGHT state');
-  assert.strictEqual(r2.state, 'EVADING_RIGHT', 'Robot 2 must enter EVADING_RIGHT state');
+  // Lower number AMR (R1) initiates overtake on side lane
+  assert.strictEqual(r1.state, 'OVERTAKING', 'Lower number AMR R1 must enter OVERTAKING state');
+  assert.strictEqual(r1.overtakingTargetId, 'R4', 'R1 must target R4 for overtaking');
 
-  // R1 heading East (0) -> right side is South (y increases)
-  // R2 heading West (PI) -> right side is North (y decreases)
-  assert(r1.targetPoint.y > 390, 'R1 must shift South (+Y) onto its right-hand lane');
-  assert(r2.targetPoint.y < 390, 'R2 must shift North (-Y) onto its right-hand lane');
-  assert(r1.targetPoint.x < 300, 'R1 must reverse backward before shifting right');
-  assert(r2.targetPoint.x > 350, 'R2 must reverse backward before shifting right');
+  // Higher number AMR (R4) holds center transit
+  assert.strictEqual(r4.state, 'WAITING_YIELD', 'Higher number AMR R4 must hold center transit');
+  assert.strictEqual(r4.yieldingFor, 'R1', 'R4 must yield right-of-way to overtaking R1');
+
+  // Verify R1 takes either Lane 1 (y = 340) or Lane 3 (y = 440)
+  const firstOvertakeWaypoint = r1.path[0];
+  assert(firstOvertakeWaypoint.y === 340 || firstOvertakeWaypoint.y === 440, 'R1 must take alternate lane 1 (y=340) or lane 3 (y=440)');
+
+  // Verify final merge waypoint returns to center lane (y = 390)
+  const mergeWaypoint = r1.path[r1.path.length - 1];
+  assert.strictEqual(mergeWaypoint.y, 390, 'R1 must merge back into center transit (y=390) after overtaking');
 });
 
 console.log(`\n====================================================`);

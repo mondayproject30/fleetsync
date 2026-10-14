@@ -181,11 +181,24 @@ export class SimulationEngine {
             robot.state = 'WAITING_YIELD';
           } else {
             const pathFinished = robot.advanceWaypoint();
-            if (pathFinished && robot.state === 'YIELDING') {
-              // Reached yield holding spot -> wait for winner to pass
-              robot.state = 'WAITING_YIELD';
+            if (pathFinished) {
+              if (robot.state === 'OVERTAKING') {
+                robot.resumeFromOvertake();
+                this.emitLog(`[OVERTAKE COMPLETED] Robot ${robot.id} completed pass and merged into center transit.`, 'success');
+              } else if (robot.state === 'YIELDING') {
+                robot.state = 'WAITING_YIELD';
+              }
             }
           }
+        }
+      }
+
+      // Check if robot in OVERTAKING has passed its target robot
+      if (robot.state === 'OVERTAKING' && robot.overtakingTargetId) {
+        const higherBot = this.robots.find(r => r.id === robot.overtakingTargetId);
+        if (!higherBot || Math.hypot(higherBot.x - robot.x, higherBot.y - robot.y) > 85) {
+          robot.resumeFromOvertake();
+          this.emitLog(`[OVERTAKE COMPLETED] Robot ${robot.id} cleared Robot ${robot.overtakingTargetId} and merged into center transit.`, 'success');
         }
       }
 
@@ -194,7 +207,7 @@ export class SimulationEngine {
         const partnerId = robot.yieldingFor || robot.evasionPartnerId;
         const partner = this.robots.find(r => r.id === partnerId);
         const elapsed = robot.blockedSince ? (Date.now() - robot.blockedSince) : 0;
-        if (!partner || Math.hypot(partner.x - robot.x, partner.y - robot.y) > 75 || elapsed > 3500) {
+        if (!partner || Math.hypot(partner.x - robot.x, partner.y - robot.y) > 75 || partner.state !== 'OVERTAKING' || elapsed > 3500) {
           robot.hasLoggedEvasion = false;
           robot.resumeFromYield();
         }

@@ -56,6 +56,11 @@ export class Robot {
     this.isLowBatteryAlerted = false;
     this.evasionPartnerId = null;
     this.hasLoggedEvasion = false;
+    this.overtakingTargetId = null;
+    this.overtakeLane = null;
+    this.hasLoggedOvertake = false;
+    this.preOvertakePath = null;
+    this.preOvertakeIndex = 0;
 
     // Sensor & Communication
     this.lidarAlert = false;
@@ -198,6 +203,149 @@ export class Robot {
 
     this.targetPoint = { x: safeX, y: safeY };
     this.blockedSince = Date.now();
+  }
+
+  holdCenterLane(lowerBotId) {
+    if (this.state === 'WAITING_YIELD') return;
+    this.state = 'WAITING_YIELD';
+    this.yieldingFor = lowerBotId;
+    this.blockedSince = Date.now();
+  }
+
+  initiateOvertake(higherBot, allRobots = []) {
+    if (this.state === 'OVERTAKING' || this.x <= 125) return null;
+
+    this.state = 'OVERTAKING';
+    this.overtakingTargetId = higherBot.id;
+    this.blockedSince = Date.now();
+
+    if (!this.preOvertakePath) {
+      this.preOvertakePath = [...this.path];
+      this.preOvertakeIndex = this.waypointIndex;
+    }
+
+    // Determine corridor direction: horizontal or vertical
+    const isHorizontal = Math.abs(Math.cos(this.heading)) >= Math.abs(Math.sin(this.heading));
+    let chosenLane = 'Lane 1 (Left)';
+    let waypoints = [];
+
+    if (isHorizontal) {
+      const isMovingEast = Math.cos(this.heading) >= 0;
+      const fwdDir = isMovingEast ? 1 : -1;
+
+      // Available lanes in horizontal corridor:
+      // Lane 1: y = 340 (Left if heading East, Right if heading West)
+      // Lane 3: y = 440 (Right if heading East, Left if heading West)
+      const lane1Y = 340;
+      const lane3Y = 440;
+      const centerY = 390;
+
+      const isOccupied = (targetY) =>
+        allRobots.some(r => r.id !== this.id && r.id !== higherBot.id && Math.abs(r.y - targetY) < 30 && Math.abs(r.x - this.x) < 55);
+
+      let targetSideY = lane1Y;
+      chosenLane = isMovingEast ? 'Lane 1 (Left)' : 'Lane 3 (Left)';
+
+      if (isOccupied(lane1Y)) {
+        targetSideY = lane3Y;
+        chosenLane = isMovingEast ? 'Lane 3 (Right)' : 'Lane 1 (Right)';
+      }
+
+      // 1. Shift diagonally into chosen side lane
+      const p1 = {
+        x: Math.max(180, Math.min(1060, this.x + fwdDir * 25)),
+        y: targetSideY
+      };
+
+      // 2. Travel along side lane past higherBot
+      const passX = isMovingEast
+        ? Math.max(this.x + 35, higherBot.x + 45)
+        : Math.min(this.x - 35, higherBot.x - 45);
+      const p2 = {
+        x: Math.max(180, Math.min(1060, passX)),
+        y: targetSideY
+      };
+
+      // 3. Merge back into center lane ahead of higherBot
+      const mergeX = isMovingEast ? p2.x + 40 : p2.x - 40;
+      const p3 = {
+        x: Math.max(180, Math.min(1060, mergeX)),
+        y: centerY
+      };
+
+      waypoints = [p1, p2, p3];
+    } else {
+      // Vertical corridor
+      const isMovingSouth = Math.sin(this.heading) >= 0;
+      const fwdDir = isMovingSouth ? 1 : -1;
+
+      const lane1X = 515;
+      const lane3X = 595;
+      const centerX = 555;
+
+      const isOccupied = (targetX) =>
+        allRobots.some(r => r.id !== this.id && r.id !== higherBot.id && Math.abs(r.x - targetX) < 30 && Math.abs(r.y - this.y) < 55);
+
+      let targetSideX = lane1X;
+      chosenLane = isMovingSouth ? 'Lane 1 (Right)' : 'Lane 3 (Left)';
+
+      if (isOccupied(lane1X)) {
+        targetSideX = lane3X;
+        chosenLane = isMovingSouth ? 'Lane 3 (Left)' : 'Lane 1 (Right)';
+      }
+
+      const p1 = {
+        x: targetSideX,
+        y: Math.max(85, Math.min(670, this.y + fwdDir * 25))
+      };
+
+      const passY = isMovingSouth
+        ? Math.max(this.y + 35, higherBot.y + 45)
+        : Math.min(this.y - 35, higherBot.y - 45);
+      const p2 = {
+        x: targetSideX,
+        y: Math.max(85, Math.min(670, passY))
+      };
+
+      const mergeY = isMovingSouth ? p2.y + 40 : p2.y - 40;
+      const p3 = {
+        x: centerX,
+        y: Math.max(85, Math.min(670, mergeY))
+      };
+
+      waypoints = [p1, p2, p3];
+    }
+
+    this.overtakeLane = chosenLane;
+    this.setPath(waypoints);
+    return chosenLane;
+  }
+
+  resumeFromOvertake() {
+    this.overtakingTargetId = null;
+    this.overtakeLane = null;
+    this.hasLoggedOvertake = false;
+
+    if (this.cargo) {
+      this.state = 'EN_ROUTE_CONVEYOR';
+    } else if (this.job && this.job.type === 'Pick goods') {
+      this.state = 'EN_ROUTE_SHELF';
+    } else if (this.job && this.job.type === 'Charge') {
+      this.state = 'RETURNING_CHARGE';
+    } else {
+      this.state = 'RETURNING_TO_BAY';
+    }
+
+    if (this.preOvertakePath && this.preOvertakePath.length > 0) {
+      const finalGoal = this.preOvertakePath[this.preOvertakePath.length - 1];
+      const startNode = warehouseGraph.findNearestNode(this.x, this.y);
+      const goalNode = warehouseGraph.findNearestNode(finalGoal.x, finalGoal.y);
+      if (startNode && goalNode) {
+        const remaining = warehouseGraph.findPath(startNode.id, goalNode.id);
+        this.setPath(remaining);
+      }
+      this.preOvertakePath = null;
+    }
   }
 
   resumeFromYield() {
